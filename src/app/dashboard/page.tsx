@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
-// ── Types ──────────────────────────────────────────────────────────────────
+// Types
 interface Earning {
   id: string;
   source: string;
@@ -22,7 +22,7 @@ interface Profile {
   wallet_address?: string;
 }
 
-// ── Constants ──────────────────────────────────────────────────────────────
+// Constants
 const NAV_ITEMS = [
   { icon: GridIcon, label: "Overview", href: "/dashboard" },
   { icon: TrendingIcon, label: "Earnings", href: "/dashboard/earnings" },
@@ -33,7 +33,7 @@ const NAV_ITEMS = [
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
-// ── SVG Icons ──────────────────────────────────────────────────────────────
+// SVG Icons
 function GridIcon({ size = 16 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 16 16" fill="none">
@@ -105,7 +105,7 @@ function CloseIcon() {
   );
 }
 
-// ── Stat Card ──────────────────────────────────────────────────────────────
+// Stat Card 
 function StatCard({
   label, value, sub, accent = false, delay = 0,
 }: {
@@ -135,7 +135,7 @@ function StatCard({
   );
 }
 
-// ── Mini Bar Chart ─────────────────────────────────────────────────────────
+// Mini Bar Chart
 function EarningsChart({ earnings }: { earnings: Earning[] }) {
   const monthly = MONTHS.map((month, mi) => {
     const total = earnings
@@ -186,7 +186,7 @@ function EarningsChart({ earnings }: { earnings: Earning[] }) {
   );
 }
 
-// ── Add Earning Modal ──────────────────────────────────────────────────────
+// Add Earning Modal
 function AddEarningModal({ onClose, onAdd }: { onClose: () => void; onAdd: (e: Omit<Earning, "id">) => void }) {
   const [form, setForm] = useState({ source: "", amount_usd: "", earned_date: "", description: "" });
   const [loading, setLoading] = useState(false);
@@ -299,7 +299,7 @@ function AddEarningModal({ onClose, onAdd }: { onClose: () => void; onAdd: (e: O
   );
 }
 
-// ── Sidebar ────────────────────────────────────────────────────────────────
+// Sidebar
 function Sidebar({
   profile, active, onSignOut, mobile, onClose,
 }: {
@@ -392,7 +392,7 @@ function Sidebar({
   );
 }
 
-// ── Main Dashboard ─────────────────────────────────────────────────────────
+// Main Dashboard
 export default function DashboardPage() {
   const router = useRouter();
   const supabase = createClient();
@@ -461,12 +461,12 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-[#080808] text-white flex" style={{ fontFamily: "'DM Sans', sans-serif" }}>
 
-      {/* ── Desktop Sidebar ── */}
+      {/* Desktop Sidebar */}
       <div className="hidden md:flex flex-col w-56 flex-shrink-0 fixed left-0 top-0 bottom-0">
         <Sidebar profile={profile} active="Overview" onSignOut={handleSignOut} />
       </div>
 
-      {/* ── Mobile Sidebar ── */}
+      {/* Mobile Sidebar */}
       <AnimatePresence>
         {mobileSidebar && (
           <>
@@ -486,7 +486,7 @@ export default function DashboardPage() {
         )}
       </AnimatePresence>
 
-      {/* ── Main Content ── */}
+      {/* Main Content */}
       <div className="flex-1 md:ml-56 flex flex-col min-h-screen">
 
         {/* Top bar */}
@@ -660,7 +660,7 @@ export default function DashboardPage() {
             )}
           </div>
 
-          {/* Credential CTA — if no credential yet */}
+          {/* Credential CTA */}
           {earnings.length >= 3 && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}

@@ -1,0 +1,213 @@
+import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
+
+export async function GET(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
+  const credentialId = searchParams.get("id");
+
+  if (!credentialId) {
+    return NextResponse.json({ error: "Missing credential ID" }, { status: 400 });
+  }
+
+  const supabase = await createClient();
+
+  const { data: credential, error } = await supabase
+    .from("credentials")
+    .select("*")
+    .eq("id", credentialId)
+    .eq("is_public", true)
+    .single();
+
+  if (error || !credential) {
+    return NextResponse.json({ error: "Credential not found" }, { status: 404 });
+  }
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("full_name, profession")
+    .eq("id", credential.user_id)
+    .single();
+
+  const name = profile?.full_name ?? "EarnID User";
+  const profession = profile?.profession ?? "";
+  const score = credential.consistency_score;
+  const total = credential.total_earned.toLocaleString();
+  const avg = Math.round(credential.monthly_average).toLocaleString();
+  const since = new Date(credential.active_since).toLocaleDateString("en-US", { month: "short", year: "numeric" });
+  const mintAddr = credential.mint_address
+    ? `${credential.mint_address.slice(0, 12)}...${credential.mint_address.slice(-8)}`
+    : "Solana Devnet";
+  const minted = new Date(credential.created_at).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+  const verifyUrl = `${req.nextUrl.origin}/verify/${credential.id}`;
+  const circ = (2 * Math.PI * 44).toFixed(2);
+  const offset = (2 * Math.PI * 44 * (1 - score / 100)).toFixed(2);
+
+  const sourceTags = (credential.top_sources as string[])
+    .map((s) => `<span style="font-size:10px;letter-spacing:0.06em;border:1px solid #252525;color:#666;padding:4px 12px;border-radius:50px;font-family:monospace;">${s}</span>`)
+    .join("");
+
+  // QR code squares pattern
+  const qrSquares = [[0,0],[1,0],[2,0],[0,1],[2,1],[0,2],[1,2],[2,2],[4,0],[4,1],[4,2],[5,1],[7,0],[8,0],[9,0],[7,1],[9,1],[7,2],[8,2],[9,2],[0,4],[1,4],[3,4],[5,4],[6,4],[8,4],[9,4],[0,5],[2,5],[4,5],[6,5],[8,5],[0,6],[2,6],[3,6],[5,6],[7,6],[9,6],[0,7],[1,7],[2,7],[4,7],[6,7],[8,7],[9,7],[0,8],[3,8],[5,8],[7,8],[0,9],[1,9],[2,9],[4,9],[5,9],[7,9],[9,9]]
+    .map(([x, y]) => `<rect x="${x}" y="${y}" width="1" height="1" fill="black"/>`)
+    .join("");
+
+  const html = `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<title>EarnID — ${name}</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap');
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html,body{
+    width:720px;height:440px;overflow:hidden;
+    background:#080808;
+    display:flex;align-items:center;justify-content:center;
+    -webkit-print-color-adjust:exact;
+    print-color-adjust:exact;
+    font-family:'DM Sans',sans-serif;
+    color:white;
+  }
+  .card{
+    width:680px;
+    background:linear-gradient(155deg,#131313 0%,#0a0a0a 100%);
+    border:1px solid #1f1f1f;
+    border-radius:18px;
+    padding:26px 30px 22px;
+    position:relative;overflow:hidden;
+  }
+  .glow-tr{position:absolute;top:0;right:0;width:220px;height:220px;background:radial-gradient(circle at top right,rgba(200,241,53,0.10),transparent 65%);pointer-events:none;}
+  .glow-bl{position:absolute;bottom:0;left:0;width:160px;height:160px;background:radial-gradient(circle at bottom left,rgba(200,241,53,0.04),transparent 65%);pointer-events:none;}
+  .header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+  .logo{display:flex;align-items:center;gap:8px;}
+  .logo-dot{width:24px;height:24px;border-radius:50%;background:#C8F135;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:10px;color:#000;}
+  .logo-name{font-family:'Syne',sans-serif;font-weight:800;font-size:13px;color:white;}
+  .badge{font-size:8.5px;letter-spacing:0.25em;color:#C8F135;border:1px solid rgba(200,241,53,0.25);padding:4px 12px;border-radius:50px;font-family:monospace;}
+  .divider{height:1px;background:#1a1a1a;margin:12px 0;}
+  .cred-label{font-size:7.5px;letter-spacing:0.22em;color:#2a2a2a;text-transform:uppercase;margin-bottom:3px;}
+  .name{font-family:'Syne',sans-serif;font-size:26px;font-weight:800;color:white;margin-bottom:2px;line-height:1.1;}
+  .profession{font-size:10.5px;color:#555;margin-bottom:14px;}
+  .main-row{display:flex;align-items:center;gap:20px;margin-bottom:12px;}
+  .ring-wrap{position:relative;width:96px;height:96px;flex-shrink:0;}
+  .ring-inner{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+  .ring-score{font-family:'Syne',sans-serif;font-size:26px;font-weight:900;color:white;line-height:1;}
+  .ring-label{font-size:7px;color:#444;letter-spacing:0.2em;text-transform:uppercase;margin-top:1px;}
+  .stats{display:flex;gap:20px;flex:1;}
+  .stat-lbl{font-size:7px;letter-spacing:0.18em;color:#333;text-transform:uppercase;margin-bottom:2px;}
+  .stat-val{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:white;line-height:1.1;}
+  .stat-sub{font-size:11px;color:#666;}
+  .sources{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;}
+  .footer-divider{height:1px;background:#161616;margin-bottom:11px;}
+  .footer{display:flex;align-items:flex-end;justify-content:space-between;}
+  .chain-label{font-size:7px;letter-spacing:0.2em;color:#1e1e1e;text-transform:uppercase;margin-bottom:3px;}
+  .chain-val{font-family:monospace;font-size:9px;color:#3a3a3a;margin-bottom:1px;}
+  .verify-url{font-family:monospace;font-size:8px;color:#2a2a2a;}
+  .meta-right{text-align:right;}
+  .qr-box{width:44px;height:44px;background:white;border-radius:5px;padding:4px;flex-shrink:0;}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="glow-tr"></div>
+  <div class="glow-bl"></div>
+
+  <div class="header">
+    <div class="logo">
+      <div class="logo-dot">E</div>
+      <span class="logo-name">EarnID</span>
+    </div>
+    <span class="badge">VERIFIED</span>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="cred-label">Income Credential</div>
+  <div class="name">${name}</div>
+  <div class="profession">${profession} · Nigeria</div>
+
+  <div class="main-row">
+    <div class="ring-wrap">
+      <svg width="96" height="96" viewBox="0 0 96 96" style="position:absolute;top:0;left:0;">
+        <circle cx="48" cy="48" r="44" fill="none" stroke="#111" stroke-width="7" transform="rotate(-90 48 48)"/>
+        <circle cx="48" cy="48" r="44" fill="none" stroke="#C8F135" stroke-width="7"
+          stroke-linecap="round"
+          stroke-dasharray="${circ}"
+          stroke-dashoffset="${offset}"
+          transform="rotate(-90 48 48)"/>
+      </svg>
+      <div class="ring-inner">
+        <span class="ring-score">${score}</span>
+        <span class="ring-label">SCORE</span>
+      </div>
+    </div>
+    <div class="stats">
+      <div>
+        <div class="stat-lbl">Total Verified</div>
+        <div class="stat-val">$${total}</div>
+      </div>
+      <div>
+        <div class="stat-lbl">Avg / Month</div>
+        <div class="stat-sub">$${avg}</div>
+      </div>
+      <div>
+        <div class="stat-lbl">Active Since</div>
+        <div class="stat-sub">${since}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sources">${sourceTags}</div>
+
+  <div class="footer-divider"></div>
+  <div class="footer">
+    <div>
+      <div class="chain-label">On-chain proof</div>
+      <div class="chain-val">SOL · ${mintAddr}</div>
+      <div class="verify-url">${verifyUrl}</div>
+    </div>
+    <svg class="qr-box" viewBox="0 0 10 10" xmlns="http://www.w3.org/2000/svg">
+      ${qrSquares}
+    </svg>
+    <div class="meta-right">
+      <div class="chain-label">Minted · ${minted}</div>
+      <div class="chain-val">Solana Devnet</div>
+    </div>
+  </div>
+</div>
+</body>
+</html>`;
+
+  try {
+    const puppeteer = await import("puppeteer");
+    const browser = await puppeteer.default.launch({
+      headless: true,
+      args: ["--no-sandbox", "--disable-setuid-sandbox"],
+    });
+    const page = await browser.newPage();
+    await page.setContent(html, { waitUntil: "networkidle0" });
+    await page.setViewport({ width: 720, height: 440 });
+
+    const pdf = await page.pdf({
+      width: "720px",
+      height: "440px",
+      printBackground: true,
+      margin: { top: "0", bottom: "0", left: "0", right: "0" },
+    });
+
+    await browser.close();
+
+    const safeName = name.replace(/[^a-zA-Z0-9]/g, "-");
+    return new NextResponse(new Uint8Array(pdf), {
+        headers: {
+            "Content-Type": "application/pdf",
+            "Content-Disposition": `attachment; filename="EarnID-Credential-${safeName}.pdf"`,
+        },
+     });
+  } catch (err) {
+    console.error("Puppeteer error:", err);
+    return NextResponse.json(
+      { error: "PDF generation failed. Make sure puppeteer is installed: npm install puppeteer" },
+      { status: 500 }
+    );
+  }
+}

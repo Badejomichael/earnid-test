@@ -140,7 +140,7 @@ export default function LoginPage() {
         </motion.div>
       </div>
 
-      {/* Right panel — form */}
+      {/* Right panel (form) */}
       <div className="flex-1 flex flex-col items-center justify-center px-5 py-12 md:px-12">
         {/* Mobile logo */}
         <div className="lg:hidden mb-10 self-start">

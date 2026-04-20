@@ -298,6 +298,7 @@ export default function CredentialsPage() {
   const [mintDone, setMintDone] = useState(false);
   const [copied, setCopied] = useState(false);
   const [mobileSidebar, setMobileSidebar] = useState(false);
+  const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
     const link = document.createElement("link");
@@ -440,25 +441,29 @@ export default function CredentialsPage() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     if (!credential) return;
-    const verifyUrl = `${window.location.origin}/verify/${credential.id}?print=true`;
-    const win = window.open(verifyUrl, "_blank");
-    if (!win) return;
-    // Poll until the page is ready, then print
-    let attempts = 0;
-    const poll = setInterval(() => {
-      attempts++;
-      try {
-        if (win.document.readyState === "complete") {
-          clearInterval(poll);
-          setTimeout(() => win.print(), 800);
-        }
-      } catch {
-        // cross-origin guard — shouldn't happen on same origin
+    try {
+      setDownloading(true);
+      const res = await fetch(`/api/download-credential?id=${credential.id}`);
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        console.error("API error:", data);
+        throw new Error(data?.detail ?? data?.error ?? "Failed");
       }
-      if (attempts > 30) clearInterval(poll);
-    }, 300);
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `EarnID-Credential-${(profile?.full_name ?? "Card").replace(/\s+/g, "-")}.pdf`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (err: any) {
+      console.error("Download error:", err?.message ?? err);
+      alert(`Download failed: ${err?.message ?? "Unknown error"}. Check console for details.`);
+    } finally {
+      setDownloading(false);
+    }
   };
 
 
@@ -525,11 +530,26 @@ export default function CredentialsPage() {
                 <CopyIcon />
                 <span className="hidden sm:inline">{copied ? "Copied!" : "Copy Link"}</span>
               </motion.button>
-              <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
+              <motion.button
+                whileHover={{ scale: downloading ? 1 : 1.04 }}
+                whileTap={{ scale: downloading ? 1 : 0.96 }}
                 onClick={handleDownload}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-full border border-[#1a1a1a] text-[#555] text-xs hover:text-white hover:border-[#2a2a2a] transition-all">
-                <DownloadIcon />
-                <span className="hidden sm:inline">Download</span>
+                disabled={downloading}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-full border border-[#1a1a1a] text-xs transition-all disabled:cursor-not-allowed"
+                style={{ color: downloading ? "#C8F135" : "#555", borderColor: downloading ? "#C8F135]/20" : "#1a1a1a" }}
+              >
+                {downloading ? (
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                    className="w-3.5 h-3.5 border border-[#C8F135] border-t-transparent rounded-full flex-shrink-0"
+                  />
+                ) : (
+                  <DownloadIcon />
+                )}
+                <span className="hidden sm:inline">
+                  {downloading ? "Generating..." : "Download PDF"}
+                </span>
               </motion.button>
             </div>
           )}

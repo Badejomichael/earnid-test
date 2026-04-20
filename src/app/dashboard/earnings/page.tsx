@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
-// ── Types ──────────────────────────────────────────────────────────────────
+// Types 
 interface Earning {
   id: string;
   source: string;
@@ -21,7 +21,7 @@ interface Profile {
   profession: string;
 }
 
-// ── Icons ──────────────────────────────────────────────────────────────────
+// Icons
 function GridIcon({ size = 16 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 16 16" fill="none">
@@ -120,7 +120,7 @@ function SearchIcon({ size = 14 }: { size?: number }) {
 }
 
 
-// ── Custom Dropdown ────────────────────────────────────────────────────────
+// Custom Dropdown 
 function CustomSelect({ value, onChange, options }: { value: string; onChange: (v: string) => void; options: string[] }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -183,7 +183,7 @@ function CustomSelect({ value, onChange, options }: { value: string; onChange: (
   );
 }
 
-// ── Nav items (same as dashboard) ──────────────────────────────────────────
+// Nav items
 const NAV_ITEMS = [
   { icon: GridIcon, label: "Overview", href: "/dashboard" },
   { icon: TrendingIcon, label: "Earnings", href: "/dashboard/earnings" },
@@ -192,7 +192,7 @@ const NAV_ITEMS = [
   { icon: SettingsIcon, label: "Settings", href: "/dashboard/settings" },
 ];
 
-// ── Sidebar ────────────────────────────────────────────────────────────────
+// Sidebar 
 function Sidebar({
   profile, active, onSignOut, mobile, onClose,
 }: {
@@ -256,7 +256,7 @@ function Sidebar({
   );
 }
 
-// ── Add Earning Modal ──────────────────────────────────────────────────────
+// Add Earning Modal 
 function AddEarningModal({ onClose, onAdd }: { onClose: () => void; onAdd: (e: Earning) => void }) {
   const [form, setForm] = useState({ source: "", amount_usd: "", earned_date: "", description: "" });
   const [loading, setLoading] = useState(false);
@@ -289,9 +289,7 @@ function AddEarningModal({ onClose, onAdd }: { onClose: () => void; onAdd: (e: E
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
       style={{ background: "rgba(0,0,0,0.8)", backdropFilter: "blur(8px)" }}
-      onClick={(e: React.MouseEvent<HTMLDivElement>) =>
-                    e.target === e.currentTarget && onClose()
-                }
+      onClick={(e: React.MouseEvent<HTMLDivElement>) => e.target === e.currentTarget && onClose()}
     >
       <motion.div
         initial={{ scale: 0.92, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.92, y: 20 }}
@@ -350,7 +348,7 @@ function AddEarningModal({ onClose, onAdd }: { onClose: () => void; onAdd: (e: E
   );
 }
 
-// ── CSV Upload Modal ───────────────────────────────────────────────────────
+// CSV Upload Modal
 function CSVModal({ onClose, onImport }: { onClose: () => void; onImport: (rows: Earning[]) => void }) {
   const [parsed, setParsed] = useState<Omit<Earning, "id">[]>([]);
   const [error, setError] = useState("");
@@ -365,7 +363,7 @@ function CSVModal({ onClose, onImport }: { onClose: () => void; onImport: (rows:
     reader.onload = (ev) => {
       const text = ev.target?.result as string;
       const lines = text.trim().split("\n");
-      // Expect: source, amount_usd, earned_date, description (optional)
+     
       const rows: Omit<Earning, "id">[] = [];
       for (let i = 1; i < lines.length; i++) {
         const cols = lines[i].split(",").map((c) => c.trim().replace(/^"|"$/g, ""));
@@ -482,7 +480,7 @@ function CSVModal({ onClose, onImport }: { onClose: () => void; onImport: (rows:
   );
 }
 
-// ── Delete Confirm ─────────────────────────────────────────────────────────
+// Delete Confirm 
 function DeleteConfirm({ earning, onClose, onDelete }: { earning: Earning; onClose: () => void; onDelete: (id: string) => void }) {
   const [loading, setLoading] = useState(false);
 
@@ -499,9 +497,7 @@ function DeleteConfirm({ earning, onClose, onDelete }: { earning: Earning; onClo
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
       style={{ background: "rgba(0,0,0,0.85)", backdropFilter: "blur(8px)" }}
-      onClick={(e: React.MouseEvent<HTMLDivElement>) =>
-                e.target === e.currentTarget && onClose()
-              }
+      onClick={(e: React.MouseEvent<HTMLDivElement>) => e.target === e.currentTarget && onClose()}
     >
       <motion.div
         initial={{ scale: 0.92 }} animate={{ scale: 1 }} exit={{ scale: 0.92 }}
@@ -529,7 +525,7 @@ function DeleteConfirm({ earning, onClose, onDelete }: { earning: Earning; onClo
   );
 }
 
-// ── Main Page ──────────────────────────────────────────────────────────────
+// Main Page
 export default function EarningsPage() {
   const router = useRouter();
   const supabase = createClient();

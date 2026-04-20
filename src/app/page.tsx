@@ -207,7 +207,7 @@ export default function LandingPage() {
       {/* Scroll progress line */}
       <motion.div className="fixed left-0 top-0 w-0.5 bg-[#C8F135] z-50 origin-top" style={{ height: lineHeight }} />
 
-      {/* ── NAV ── */}
+      {/* NAV  */}
       <nav className="fixed top-0 left-0 right-0 z-40 px-5 md:px-10 py-4 flex items-center justify-between"
         style={{ background: "rgba(8,8,8,0.88)", backdropFilter: "blur(20px)", borderBottom: "1px solid #111" }}>
 
@@ -309,7 +309,7 @@ export default function LandingPage() {
         )}
       </AnimatePresence>
 
-      {/* ── HERO ── */}
+      {/* HERO */}
       <section className="min-h-screen flex flex-col lg:flex-row items-center gap-12 px-5 md:px-10 pt-28 pb-20 max-w-7xl mx-auto">
         <div className="flex-1 min-w-0">
           <motion.div
@@ -386,7 +386,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── HOW IT WORKS ── */}
+      {/* HOW IT WORKS  */}
       <section id="how-it-works" className="px-5 md:px-10 py-24 max-w-5xl mx-auto">
         <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="mb-16">
           <p className="text-[11px] tracking-[0.3em] text-[#C8F135] uppercase mb-4">Process</p>
@@ -420,7 +420,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── FEATURES ── */}
+      {/* FEATURES */}
       <section id="features" className="px-5 md:px-10 py-24 max-w-5xl mx-auto">
         <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="mb-16">
           <p className="text-[11px] tracking-[0.3em] text-[#C8F135] uppercase mb-4">Features</p>
@@ -447,7 +447,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── CTA ── */}
+      {/* CTA  */}
       <section className="px-5 md:px-10 py-24 max-w-5xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
@@ -477,7 +477,7 @@ export default function LandingPage() {
         </motion.div>
       </section>
 
-      {/* ── FOOTER ── */}
+      {/* FOOTER */}
       <footer className="border-t border-[#0d0d0d] px-5 md:px-10 py-8 flex flex-col md:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-2.5">
           <div className="w-6 h-6 rounded-full bg-[#C8F135] flex items-center justify-center">
