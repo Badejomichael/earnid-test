@@ -445,7 +445,7 @@ export default function CredentialsPage() {
     window.open(
       `/api/download-credential?id=${credential.id}`,
       "_blank",
-      "width=760,height=500,scrollbars=no,toolbar=no,location=no,menubar=no"
+      "width=800,height=600,scrollbars=no,toolbar=no,location=no,menubar=no,status=no"
     );
   };
 
