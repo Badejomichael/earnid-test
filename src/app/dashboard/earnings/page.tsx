@@ -289,7 +289,7 @@ function AddEarningModal({ onClose, onAdd }: { onClose: () => void; onAdd: (e: E
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
       style={{ background: "rgba(0,0,0,0.8)", backdropFilter: "blur(8px)" }}
-      oonClick={(e: React.MouseEvent<HTMLDivElement>) =>
+      onClick={(e: React.MouseEvent<HTMLDivElement>) =>
                     e.target === e.currentTarget && onClose()
                 }
     >
