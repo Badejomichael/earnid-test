@@ -46,7 +46,6 @@ export async function GET(req: NextRequest) {
     .map((s) => `<span style="font-size:10px;letter-spacing:0.06em;border:1px solid #252525;color:#666;padding:4px 12px;border-radius:50px;font-family:monospace;">${s}</span>`)
     .join("");
 
-  // QR code squares pattern
   const qrSquares = [[0,0],[1,0],[2,0],[0,1],[2,1],[0,2],[1,2],[2,2],[4,0],[4,1],[4,2],[5,1],[7,0],[8,0],[9,0],[7,1],[9,1],[7,2],[8,2],[9,2],[0,4],[1,4],[3,4],[5,4],[6,4],[8,4],[9,4],[0,5],[2,5],[4,5],[6,5],[8,5],[0,6],[2,6],[3,6],[5,6],[7,6],[9,6],[0,7],[1,7],[2,7],[4,7],[6,7],[8,7],[9,7],[0,8],[3,8],[5,8],[7,8],[0,9],[1,9],[2,9],[4,9],[5,9],[7,9],[9,9]]
     .map(([x, y]) => `<rect x="${x}" y="${y}" width="1" height="1" fill="black"/>`)
     .join("");
@@ -56,15 +55,16 @@ export async function GET(req: NextRequest) {
 <head>
 <meta charset="utf-8"/>
 <title>EarnID — ${name}</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap');
   *{margin:0;padding:0;box-sizing:border-box;}
+  @page{size:720px 440px;margin:0;}
   html,body{
     width:720px;height:440px;overflow:hidden;
     background:#080808;
     display:flex;align-items:center;justify-content:center;
-    -webkit-print-color-adjust:exact;
-    print-color-adjust:exact;
+    -webkit-print-color-adjust:exact !important;
+    print-color-adjust:exact !important;
     font-family:'DM Sans',sans-serif;
     color:white;
   }
@@ -98,19 +98,22 @@ export async function GET(req: NextRequest) {
   .stat-sub{font-size:11px;color:#666;}
   .sources{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;}
   .footer-divider{height:1px;background:#161616;margin-bottom:11px;}
-  .footer{display:flex;align-items:flex-end;justify-content:space-between;}
+  .footer{display:flex;align-items:center;justify-content:space-between;}
   .chain-label{font-size:7px;letter-spacing:0.2em;color:#1e1e1e;text-transform:uppercase;margin-bottom:3px;}
   .chain-val{font-family:monospace;font-size:9px;color:#3a3a3a;margin-bottom:1px;}
   .verify-url{font-family:monospace;font-size:8px;color:#2a2a2a;}
   .meta-right{text-align:right;}
   .qr-box{width:44px;height:44px;background:white;border-radius:5px;padding:4px;flex-shrink:0;}
+  @media print {
+    html,body{width:720px;height:440px;}
+    .card{break-inside:avoid;}
+  }
 </style>
 </head>
 <body>
 <div class="card">
   <div class="glow-tr"></div>
   <div class="glow-bl"></div>
-
   <div class="header">
     <div class="logo">
       <div class="logo-dot">E</div>
@@ -118,13 +121,10 @@ export async function GET(req: NextRequest) {
     </div>
     <span class="badge">VERIFIED</span>
   </div>
-
   <div class="divider"></div>
-
   <div class="cred-label">Income Credential</div>
   <div class="name">${name}</div>
   <div class="profession">${profession} · Nigeria</div>
-
   <div class="main-row">
     <div class="ring-wrap">
       <svg width="96" height="96" viewBox="0 0 96 96" style="position:absolute;top:0;left:0;">
@@ -155,9 +155,7 @@ export async function GET(req: NextRequest) {
       </div>
     </div>
   </div>
-
   <div class="sources">${sourceTags}</div>
-
   <div class="footer-divider"></div>
   <div class="footer">
     <div>
@@ -174,40 +172,21 @@ export async function GET(req: NextRequest) {
     </div>
   </div>
 </div>
+<script>
+  // Wait for fonts then auto-print
+  document.fonts.ready.then(function() {
+    setTimeout(function() {
+      window.print();
+      setTimeout(function() { window.close(); }, 1000);
+    }, 500);
+  });
+</script>
 </body>
 </html>`;
 
-  try {
-    const puppeteer = await import("puppeteer");
-    const browser = await puppeteer.default.launch({
-      headless: true,
-      args: ["--no-sandbox", "--disable-setuid-sandbox"],
-    });
-    const page = await browser.newPage();
-    await page.setContent(html, { waitUntil: "networkidle0" });
-    await page.setViewport({ width: 720, height: 440 });
-
-    const pdf = await page.pdf({
-      width: "720px",
-      height: "440px",
-      printBackground: true,
-      margin: { top: "0", bottom: "0", left: "0", right: "0" },
-    });
-
-    await browser.close();
-
-    const safeName = name.replace(/[^a-zA-Z0-9]/g, "-");
-    return new NextResponse(new Uint8Array(pdf), {
-        headers: {
-            "Content-Type": "application/pdf",
-            "Content-Disposition": `attachment; filename="EarnID-Credential-${safeName}.pdf"`,
-        },
-     });
-  } catch (err) {
-    console.error("Puppeteer error:", err);
-    return NextResponse.json(
-      { error: "PDF generation failed. Make sure puppeteer is installed: npm install puppeteer" },
-      { status: 500 }
-    );
-  }
+  return new NextResponse(html, {
+    headers: {
+      "Content-Type": "text/html; charset=utf-8",
+    },
+  });
 }
