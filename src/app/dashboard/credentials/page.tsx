@@ -5,8 +5,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import QRCodeDisplay from "@/components/QRCodeDisplay";
 
-// ── Types ──────────────────────────────────────────────────────────────────
+// Types 
 interface Earning {
   id: string;
   source: string;
@@ -32,7 +33,7 @@ interface Profile {
   profession: string;
 }
 
-// ── Icons ──────────────────────────────────────────────────────────────────
+// Icons
 function GridIcon({ size = 16 }: { size?: number }) {
   return <svg width={size} height={size} viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="6" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.4"/><rect x="9" y="1" width="6" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.4"/><rect x="1" y="9" width="6" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.4"/><rect x="9" y="9" width="6" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.4"/></svg>;
 }
@@ -72,7 +73,7 @@ const NAV_ITEMS = [
   { icon: SettingsIcon, label: "Settings", href: "/dashboard/settings" },
 ];
 
-// ── Score Algorithm ────────────────────────────────────────────────────────
+// Score Algorithm 
 function calcScore(earnings: Earning[]) {
   if (earnings.length === 0) return 0;
   const total = earnings.reduce((s, e) => s + e.amount_usd, 0);
@@ -84,7 +85,7 @@ function calcScore(earnings: Earning[]) {
   return Math.round(volumeScore * 0.4 + regularityScore * 0.4 + diversityScore * 0.2);
 }
 
-// ── Sidebar ────────────────────────────────────────────────────────────────
+// Sidebar 
 function Sidebar({ profile, active, onSignOut, mobile, onClose }: {
   profile: Profile | null; active: string; onSignOut: () => void; mobile?: boolean; onClose?: () => void;
 }) {
@@ -138,7 +139,7 @@ function Sidebar({ profile, active, onSignOut, mobile, onClose }: {
   );
 }
 
-// ── Score Ring ─────────────────────────────────────────────────────────────
+// Score Ring 
 function ScoreRing({ score, size = 160 }: { score: number; size?: number }) {
   const r = size * 0.38;
   const circ = 2 * Math.PI * r;
@@ -166,7 +167,7 @@ function ScoreRing({ score, size = 160 }: { score: number; size?: number }) {
   );
 }
 
-// ── Credential Card (visual) ───────────────────────────────────────────────
+// Credential Card (visual) 
 function CredentialCardVisual({ credential, profile }: { credential: Credential; profile: Profile | null }) {
   return (
     <div
@@ -231,19 +232,13 @@ function CredentialCardVisual({ credential, profile }: { credential: Credential;
           </p>
         </div>
         {/* QR */}
-        <div className="w-10 h-10 bg-white rounded-md p-1 opacity-90">
-          <svg viewBox="0 0 10 10" className="w-full h-full">
-            {[[0,0],[1,0],[2,0],[0,1],[2,1],[0,2],[1,2],[2,2],[4,0],[4,1],[4,2],[5,1],[7,0],[8,0],[9,0],[7,1],[9,1],[7,2],[8,2],[9,2],[0,4],[1,4],[3,4],[5,4],[6,4],[8,4],[9,4],[0,5],[2,5],[4,5],[6,5],[8,5],[0,6],[2,6],[3,6],[5,6],[7,6],[9,6],[0,7],[1,7],[2,7],[4,7],[6,7],[8,7],[9,7],[0,8],[3,8],[5,8],[7,8],[0,9],[1,9],[2,9],[4,9],[5,9],[7,9],[9,9]].map(([cx, cy], i) => (
-              <rect key={i} x={cx} y={cy} width="1" height="1" fill="black" />
-            ))}
-          </svg>
-        </div>
+        <QRCodeDisplay value={`${window.location.origin}/verify/${credential.id}`} size={40} />
       </div>
     </div>
   );
 }
 
-// ── Mint Steps UI ──────────────────────────────────────────────────────────
+// Mint Steps UI 
 const MINT_STEPS = [
   "Aggregating earnings data",
   "Computing consistency score",
@@ -284,7 +279,7 @@ function MintProgress({ step }: { step: number }) {
   );
 }
 
-// ── Main Page ──────────────────────────────────────────────────────────────
+// Main Page 
 export default function CredentialsPage() {
   const router = useRouter();
   const supabase = createClient();
@@ -327,7 +322,7 @@ export default function CredentialsPage() {
 
   const handleSignOut = async () => { await supabase.auth.signOut(); router.push("/"); };
 
-  // ── Mint flow ────────────────────────────────────────────────────────────
+  //  Mint flow 
   const handleMint = async () => {
     if (earnings.length < 1) return;
     setMinting(true);
@@ -582,7 +577,7 @@ export default function CredentialsPage() {
 
         <div className="flex-1 px-5 md:px-8 py-6">
 
-          {/* ── No earnings state ── */}
+          {/* No earnings state  */}
           {earnings.length === 0 && (
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
               className="max-w-md mx-auto text-center py-20">
@@ -598,7 +593,7 @@ export default function CredentialsPage() {
             </motion.div>
           )}
 
-          {/* ── Has earnings — show layout ── */}
+          {/* Has earnings — show layout */}
           {earnings.length > 0 && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-5xl mx-auto">
 

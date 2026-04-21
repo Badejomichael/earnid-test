@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import QRCode from "qrcode";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const credentialId = searchParams.get("id");
+  
+
 
   if (!credentialId) {
     return NextResponse.json({ error: "Missing credential ID" }, { status: 400 });
@@ -50,6 +53,11 @@ export async function GET(req: NextRequest) {
   const qrSquares = [[0,0],[1,0],[2,0],[0,1],[2,1],[0,2],[1,2],[2,2],[4,0],[4,1],[4,2],[5,1],[7,0],[8,0],[9,0],[7,1],[9,1],[7,2],[8,2],[9,2],[0,4],[1,4],[3,4],[5,4],[6,4],[8,4],[9,4],[0,5],[2,5],[4,5],[6,5],[8,5],[0,6],[2,6],[3,6],[5,6],[7,6],[9,6],[0,7],[1,7],[2,7],[4,7],[6,7],[8,7],[9,7],[0,8],[3,8],[5,8],[7,8],[0,9],[1,9],[2,9],[4,9],[5,9],[7,9],[9,9]]
     .map(([x, y]) => `<rect x="${x}" y="${y}" width="1" height="1" fill="black"/>`)
     .join("");
+
+    const qrDataUrl = await QRCode.toDataURL(verifyUrl, {
+        width: 80, margin: 1,
+        color: { dark: "#000000", light: "#ffffff" },
+    });
 
   const html = `<!DOCTYPE html>
 <html>
@@ -195,9 +203,7 @@ export async function GET(req: NextRequest) {
       <div class="chain-val">SOL · ${mintAddr}</div>
       <div class="verify-url">${verifyUrl}</div>
     </div>
-    <svg class="qr-box" viewBox="0 0 10 10" xmlns="http://www.w3.org/2000/svg">
-      ${qrSquares}
-    </svg>
+    <img src="${qrDataUrl}" style="width:44px;height:44px;border-radius:5px;" />
     <div class="meta-right">
       <div class="chain-label">Minted · ${minted}</div>
       <div class="chain-val">Solana Devnet</div>
