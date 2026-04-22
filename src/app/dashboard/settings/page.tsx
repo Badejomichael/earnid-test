@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -13,7 +13,7 @@ interface Profile {
   country: string;
 }
 
-// ── Icons ──────────────────────────────────────────────────────────────────
+// Icons
 function GridIcon({ size = 16 }: { size?: number }) {
   return <svg width={size} height={size} viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="6" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.4"/><rect x="9" y="1" width="6" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.4"/><rect x="1" y="9" width="6" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.4"/><rect x="9" y="9" width="6" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.4"/></svg>;
 }
@@ -106,7 +106,112 @@ function Sidebar({ profile, active, onSignOut, mobile, onClose }: {
   );
 }
 
-// ── Input Field ────────────────────────────────────────────────────────────
+
+// Custom Profession Select 
+function CustomProfessionSelect({ value, onChange }: {
+  value: string;
+  onChange: (val: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [customVal, setCustomVal] = useState("");
+  const ref = useRef<HTMLDivElement>(null);
+  const isOther = PROFESSIONS.includes(value) ? value === "Other" : value !== "" && !PROFESSIONS.includes(value);
+  const displayValue = PROFESSIONS.includes(value) ? value : value || "";
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  // If current value is not in PROFESSIONS list (custom), show it as custom
+  const isCustomValue = value && !PROFESSIONS.includes(value);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="w-full flex items-center justify-between gap-3 bg-[#0d0d0d] border border-[#1a1a1a] rounded-xl px-4 py-3 text-sm text-left hover:border-[#C8F135]/40 transition-colors"
+        style={{ color: value ? "white" : "#2a2a2a" }}
+      >
+        <span className="truncate">{isCustomValue ? value : (value || "Select profession")}</span>
+        <motion.svg
+          animate={{ rotate: open ? 180 : 0 }}
+          transition={{ duration: 0.2 }}
+          width="12" height="12" viewBox="0 0 12 12" fill="none" className="flex-shrink-0"
+        >
+          <path d="M2 4l4 4 4-4" stroke="#444" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+        </motion.svg>
+      </button>
+
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: -6, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -6, scale: 0.97 }}
+            transition={{ duration: 0.15 }}
+            className="absolute top-full mt-2 left-0 right-0 z-50 border border-[#1a1a1a] rounded-xl overflow-hidden"
+            style={{ background: "#0e0e0e", boxShadow: "0 8px 32px rgba(0,0,0,0.6)", maxHeight: "220px", overflowY: "auto" }}
+          >
+            {PROFESSIONS.map((p) => (
+              <button
+                key={p}
+                type="button"
+                onClick={() => {
+                  onChange(p);
+                  if (p !== "Other") setCustomVal("");
+                  setOpen(false);
+                }}
+                className="w-full flex items-center justify-between px-4 py-3 text-sm text-left transition-colors hover:bg-[#141414]"
+                style={{ color: (isCustomValue ? "Other" : value) === p ? "#C8F135" : "#555" }}
+              >
+                <span>{p}</span>
+                {(isCustomValue ? "Other" : value) === p && (
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                    <polyline points="2,6 5,9 10,3" stroke="#C8F135" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                )}
+              </button>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Custom input when Other is selected */}
+      <AnimatePresence>
+        {(value === "Other" || isCustomValue) && (
+          <motion.div
+            initial={{ opacity: 0, height: 0, marginTop: 0 }}
+            animate={{ opacity: 1, height: "auto", marginTop: 10 }}
+            exit={{ opacity: 0, height: 0, marginTop: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden"
+          >
+            <input
+              type="text"
+              placeholder="Type your profession..."
+              defaultValue={isCustomValue ? value : customVal}
+              onBlur={(e) => {
+                if (e.target.value.trim()) {
+                  onChange(e.target.value.trim());
+                }
+              }}
+              onChange={(e) => setCustomVal(e.target.value)}
+              className="w-full bg-[#0d0d0d] border border-[#C8F135]/30 rounded-xl px-4 py-3 text-white text-sm placeholder-[#333] focus:outline-none focus:border-[#C8F135]/60 transition-colors"
+              autoFocus
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+// Input Field
 function Field({ label, name, value, onChange, placeholder, type = "text", mono = false }: {
   label: string; name: string; value: string; onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   placeholder?: string; type?: string; mono?: boolean;
@@ -124,7 +229,7 @@ function Field({ label, name, value, onChange, placeholder, type = "text", mono 
   );
 }
 
-// ── Toast ──────────────────────────────────────────────────────────────────
+// Toast
 function Toast({ message, type }: { message: string; type: "success" | "error" }) {
   return (
     <motion.div
@@ -144,7 +249,7 @@ function Toast({ message, type }: { message: string; type: "success" | "error" }
   );
 }
 
-// ── Delete Modal ───────────────────────────────────────────────────────────
+//  Delete Modal
 function DeleteModal({ onClose, onConfirm, loading }: {
   onClose: () => void; onConfirm: () => void; loading: boolean;
 }) {
@@ -200,7 +305,7 @@ function DeleteModal({ onClose, onConfirm, loading }: {
   );
 }
 
-// ── Main Page ──────────────────────────────────────────────────────────────
+//  Main Page
 export default function SettingsPage() {
   const router = useRouter();
   const supabase = createClient();
@@ -293,15 +398,27 @@ export default function SettingsPage() {
 
   const handleDeleteAccount = async () => {
     setDeletingAccount(true);
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    try {
+      const res = await fetch("/api/delete-account", { method: "DELETE" });
+      const data = await res.json();
 
-    // Delete all user data
-    await supabase.from("earnings").delete().eq("user_id", user.id);
-    await supabase.from("credentials").delete().eq("user_id", user.id);
-    await supabase.from("profiles").delete().eq("id", user.id);
-    await supabase.auth.signOut();
-    router.push("/");
+      if (!res.ok) {
+        showToast(data?.error ?? "Failed to delete account", "error");
+        setDeletingAccount(false);
+        return;
+      }
+
+      await supabase.auth.signOut({ scope: "global" });
+      if (typeof window !== "undefined") {
+        localStorage.clear();
+        sessionStorage.clear();
+      }
+      router.push("/");
+    } catch (err: any) {
+      console.error("Delete error:", err);
+      showToast("Something went wrong. Please try again.", "error");
+      setDeletingAccount(false);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -359,7 +476,7 @@ export default function SettingsPage() {
 
         <div className="flex-1 px-5 md:px-8 py-6 max-w-2xl mx-auto w-full space-y-5">
 
-          {/* ── Profile section ── */}
+          {/* Profile section */}
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
             className="border border-[#141414] rounded-2xl overflow-hidden" style={{ background: "#0a0a0a" }}>
             <div className="px-6 py-5 border-b border-[#0d0d0d]">
@@ -390,18 +507,10 @@ export default function SettingsPage() {
 
                 <div>
                   <label className="block text-[10px] tracking-[0.2em] text-[#444] uppercase mb-2">Profession</label>
-                  <select
-                    name="profession"
+                  <CustomProfessionSelect
                     value={form.profession}
-                    onChange={handleChange}
-                    className="w-full bg-[#0d0d0d] border border-[#1a1a1a] rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-[#C8F135]/40 transition-colors appearance-none cursor-pointer"
-                    style={{ colorScheme: "dark" }}
-                  >
-                    <option value="">Select profession</option>
-                    {PROFESSIONS.map((p) => (
-                      <option key={p} value={p} style={{ background: "#0d0d0d" }}>{p}</option>
-                    ))}
-                  </select>
+                    onChange={(val) => setForm((f) => ({ ...f, profession: val }))}
+                  />
                 </div>
               </div>
 
@@ -414,7 +523,7 @@ export default function SettingsPage() {
                 placeholder="Enter your Solana wallet address"
                 mono />
 
-              {/* Email — read only */}
+              {/* Email (read only)*/}
               <div>
                 <label className="block text-[10px] tracking-[0.2em] text-[#444] uppercase mb-2">Email Address</label>
                 <div className="flex items-center gap-2 bg-[#0d0d0d] border border-[#111] rounded-xl px-4 py-3">
@@ -444,7 +553,7 @@ export default function SettingsPage() {
             </form>
           </motion.div>
 
-          {/* ── Password section ── */}
+          {/* Password section */}
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}
             className="border border-[#141414] rounded-2xl overflow-hidden" style={{ background: "#0a0a0a" }}>
             <div className="px-6 py-5 border-b border-[#0d0d0d]">
@@ -536,7 +645,7 @@ export default function SettingsPage() {
             </form>
           </motion.div>
 
-          {/* ── Danger zone ── */}
+          {/* Danger zone */}
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.16 }}
             className="border border-[#1a0808] rounded-2xl overflow-hidden" style={{ background: "#0a0808" }}>
             <div className="px-6 py-5 border-b border-[#1a0808]">
