@@ -18,7 +18,7 @@ interface Credential {
 interface Profile { full_name: string; profession: string; }
 interface Verification { id: string; viewed_at: string; }
 
-// ── Icons ──────────────────────────────────────────────────────────────────
+// Icons 
 function GridIcon({ size = 16 }: { size?: number }) {
   return <svg width={size} height={size} viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="6" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.4"/><rect x="9" y="1" width="6" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.4"/><rect x="1" y="9" width="6" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.4"/><rect x="9" y="9" width="6" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.4"/></svg>;
 }
@@ -45,6 +45,10 @@ function CopyIcon() {
 }
 function ExternalLinkIcon() {
   return <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M5 2H2a1 1 0 00-1 1v7a1 1 0 001 1h7a1 1 0 001-1V7" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/><path d="M8 1h3v3M11 1L6 6" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/></svg>;
+}
+
+function PlaneIcon({ size = 18 }: { size?: number }) {
+  return <svg width={size} height={size} viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill="currentColor" d=" M 115 60 C 110 52 95 58 80 58 L 64 58 L 44 18 L 32 18 L 46 58 L 10 58 L 0 42 L -8 42 L -4 58 L -8 60 L -4 62 L -8 78 L 0 78 L 10 62 L 46 62 L 32 102 L 44 102 L 64 62 L 80 62 C 95 62 110 68 115 60 Z" transform="translate(5,0)"/></svg>;
 }
 
 const NAV_ITEMS = [
@@ -342,7 +346,7 @@ export default function DashboardVerifyPage() {
                     <p className="text-[9px] tracking-[0.2em] text-[#222] uppercase mb-3">Share with</p>
                     <div className="grid grid-cols-2 gap-2">
                       {[
-                        { label: "Visa Applications", icon: "✈" },
+                        { label: "Visa Applications", icon: <PlaneIcon /> },
                         { label: "Client Proposals", icon: "◈" },
                         { label: "Loan Applications", icon: "◎" },
                         { label: "LinkedIn Profile", icon: "⬡" },
