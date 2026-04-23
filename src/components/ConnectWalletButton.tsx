@@ -74,17 +74,34 @@ export default function ConnectWalletButton() {
     await supabase.from("profiles").update({ wallet_address: address }).eq("id", user.id);
   };
 
+  const isMobile = () => /Android|iPhone|iPad|iPod/i.test(
+    typeof navigator !== "undefined" ? navigator.userAgent : ""
+  );
+
   const handleConnect = (walletName: string) => {
+    setShowModal(false);
+
+    if (isMobile()) {
+      // On mobile use deep links to open wallet app directly
+      const currentUrl = encodeURIComponent(window.location.href);
+      const deepLinks: Record<string, string> = {
+        Phantom: `https://phantom.app/ul/browse/${currentUrl}?ref=${currentUrl}`,
+        Solflare: `https://solflare.com/ul/v1/browse/${currentUrl}?ref=${currentUrl}`,
+      };
+      if (deepLinks[walletName]) {
+        window.location.href = deepLinks[walletName];
+        return;
+      }
+    }
+
+    // Desktop — use standard adapter
     const wallet = wallets.find((w) => w.adapter.name === walletName);
     if (wallet) {
       select(wallet.adapter.name);
-      setShowModal(false);
     } else {
-      // Wallet not installed — open install page
       const urls: Record<string, string> = {
         Phantom: "https://phantom.app",
         Solflare: "https://solflare.com",
-        Backpack: "https://backpack.app",
       };
       if (urls[walletName]) window.open(urls[walletName], "_blank");
     }
@@ -180,7 +197,7 @@ export default function ConnectWalletButton() {
                         <div className="flex-1 text-left">
                           <p className="text-white text-sm font-medium">{wallet.name}</p>
                           <p className="text-[#333] text-[10px]">
-                            {isDetected ? "Detected" : "Install to connect"}
+                            {isDetected ? "Detected" : isMobile ? "Tap to open app" : "Install to connect"}
                           </p>
                         </div>
                         {isDetected ? (
