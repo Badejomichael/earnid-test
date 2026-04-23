@@ -61,12 +61,7 @@ function ShareIcon({ size = 16 }: { size?: number }) {
   );
 }
 function SettingsIcon({ size = 16 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 16 16" fill="none">
-      <circle cx="8" cy="8" r="2.5" stroke="currentColor" strokeWidth="1.4"/>
-      <path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.41 1.41M11.54 11.54l1.41 1.41M3.05 12.95l1.41-1.41M11.54 4.46l1.41-1.41" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
-    </svg>
-  );
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M19.4 13a7.9 7.9 0 0 0 .05-2l2.05-1.6a.5.5 0 0 0 .12-.64l-1.94-3.36a.5.5 0 0 0-.6-.22l-2.42.97a7.7 7.7 0 0 0-1.73-1l-.37-2.57A.5.5 0 0 0 14.07 2h-4.14a.5.5 0 0 0-.49.42L9.07 5a7.7 7.7 0 0 0-1.73 1l-2.42-.97a.5.5 0 0 0-.6.22L2.38 8.61a.5.5 0 0 0 .12.64L4.55 10.85a7.9 7.9 0 0 0 0 2.3L2.5 14.75a.5.5 0 0 0-.12.64l1.94 3.36a.5.5 0 0 0 .6.22l2.42-.97a7.7 7.7 0 0 0 1.73 1l.37 2.57a.5.5 0 0 0 .49.42h4.14a.5.5 0 0 0 .49-.42l.37-2.57a7.7 7.7 0 0 0 1.73-1l2.42.97a.5.5 0 0 0 .6-.22l1.94-3.36a.5.5 0 0 0-.12-.64L19.4 13Z" /> <circle cx="12" cy="12" r="3" /></svg>;
 }
 function PlusIcon({ size = 16 }: { size?: number }) {
   return (

@@ -32,7 +32,7 @@ function ShareIcon({ size = 16 }: { size?: number }) {
   return <svg width={size} height={size} viewBox="0 0 16 16" fill="none"><circle cx="12.5" cy="3.5" r="1.5" stroke="currentColor" strokeWidth="1.4"/><circle cx="12.5" cy="12.5" r="1.5" stroke="currentColor" strokeWidth="1.4"/><circle cx="3.5" cy="8" r="1.5" stroke="currentColor" strokeWidth="1.4"/><line x1="5" y1="8" x2="11" y2="4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/><line x1="5" y1="8" x2="11" y2="12" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/></svg>;
 }
 function SettingsIcon({ size = 16 }: { size?: number }) {
-  return <svg width={size} height={size} viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="2.5" stroke="currentColor" strokeWidth="1.4"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.41 1.41M11.54 11.54l1.41 1.41M3.05 12.95l1.41-1.41M11.54 4.46l1.41-1.41" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/></svg>;
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M19.4 13a7.9 7.9 0 0 0 .05-2l2.05-1.6a.5.5 0 0 0 .12-.64l-1.94-3.36a.5.5 0 0 0-.6-.22l-2.42.97a7.7 7.7 0 0 0-1.73-1l-.37-2.57A.5.5 0 0 0 14.07 2h-4.14a.5.5 0 0 0-.49.42L9.07 5a7.7 7.7 0 0 0-1.73 1l-2.42-.97a.5.5 0 0 0-.6.22L2.38 8.61a.5.5 0 0 0 .12.64L4.55 10.85a7.9 7.9 0 0 0 0 2.3L2.5 14.75a.5.5 0 0 0-.12.64l1.94 3.36a.5.5 0 0 0 .6.22l2.42-.97a7.7 7.7 0 0 0 1.73 1l.37 2.57a.5.5 0 0 0 .49.42h4.14a.5.5 0 0 0 .49-.42l.37-2.57a7.7 7.7 0 0 0 1.73-1l2.42.97a.5.5 0 0 0 .6-.22l1.94-3.36a.5.5 0 0 0-.12-.64L19.4 13Z" /> <circle cx="12" cy="12" r="3" /></svg>;
 }
 function MenuIcon() {
   return <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><line x1="3" y1="6" x2="17" y2="6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/><line x1="3" y1="10" x2="17" y2="10" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/><line x1="3" y1="14" x2="17" y2="14" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/></svg>;
@@ -285,10 +285,10 @@ export default function DashboardVerifyPage() {
           ) : (
             <div className="space-y-5">
 
-              {/* ── TOP ROW: Share link + QR ── */}
+              {/* TOP ROW: Share link + QR */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
 
-                {/* Share link card — takes 2/3 */}
+                {/* Share link card */}
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
                   className="lg:col-span-2 border border-[#141414] rounded-2xl p-6"
                   style={{ background: "#0a0a0a" }}>
@@ -366,7 +366,7 @@ export default function DashboardVerifyPage() {
                   </div>
                 </motion.div>
 
-                {/* QR code card — takes 1/3 */}
+                {/* QR code card */}
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}
                   className="border border-[#141414] rounded-2xl p-6 flex flex-col items-center justify-between"
                   style={{ background: "#0a0a0a" }}>
@@ -384,7 +384,7 @@ export default function DashboardVerifyPage() {
                 </motion.div>
               </div>
 
-              {/* ── STATS ROW ── */}
+              {/* STATS ROW  */}
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}
                 className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {[
@@ -410,7 +410,7 @@ export default function DashboardVerifyPage() {
                 ))}
               </motion.div>
 
-              {/* ── VERIFICATION HISTORY ── */}
+              {/* VERIFICATION HISTORY */}
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.16 }}
                 className="border border-[#141414] rounded-2xl overflow-hidden"
                 style={{ background: "#0a0a0a" }}>
