@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import ConnectWalletButton from "@/components/ConnectWalletButton";
 
 // Types
 interface Earning {
@@ -361,11 +362,8 @@ function Sidebar({
 
       {/* Profile + sign out */}
       <div className="px-3 py-4 border-t border-[#111] space-y-2">
-        {/* Wallet connect stub */}
-        <div className="px-3 py-2.5 rounded-xl border border-[#111] flex items-center gap-2.5 cursor-pointer hover:border-[#1e1e1e] transition-colors">
-          <div className="w-2 h-2 rounded-full bg-[#333]" />
-          <span className="text-[#2a2a2a] text-xs tracking-wider">Connect Wallet</span>
-        </div>
+        {/* Wallet connect */}
+        <ConnectWalletButton />
 
         {/* Profile */}
         <div className="px-3 py-2.5 rounded-xl flex items-center gap-3">
