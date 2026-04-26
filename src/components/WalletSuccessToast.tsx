@@ -27,14 +27,9 @@ export default function WalletSuccessToast({ show, address, onClose }: WalletSuc
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 20, scale: 0.95 }}
           transition={{ type: "spring", stiffness: 400, damping: 28 }}
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 flex items-center"
           style={{
-            position: "fixed",
-            bottom: 24,
-            left: "50%",
-            transform: "translateX(-50%)",
-            zIndex: 99998,
-            display: "flex",
-            alignItems: "center",
+            zIndex: 99997,
             gap: 10,
             padding: "10px 16px 10px 12px",
             borderRadius: 999,
