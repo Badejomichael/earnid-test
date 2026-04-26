@@ -128,3 +128,11 @@
     @apply font-sans;
   }
 }
+
+.wallet-adapter-modal-wrapper {
+  background: #0c0c0c !important;
+  border: 1px solid #1e1e1e !important;
+}
+.wallet-adapter-button {
+  background: #0a1200 !important;
+}

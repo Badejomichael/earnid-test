@@ -1,28 +1,40 @@
 "use client";
 
-import { useMemo } from "react";
-import {
-  ConnectionProvider,
-  WalletProvider,
-} from "@solana/wallet-adapter-react";
-import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
+import { ReactNode, useMemo } from "react";
+import { ConnectionProvider, WalletProvider } from "@solana/wallet-adapter-react";
+import { clusterApiUrl } from "@solana/web3.js";
 import {
   PhantomWalletAdapter,
   SolflareWalletAdapter,
+  
+  CoinbaseWalletAdapter,
+  TrustWalletAdapter,
 } from "@solana/wallet-adapter-wallets";
-import { clusterApiUrl } from "@solana/web3.js";
 
-export default function SolanaProvider({ children }: { children: React.ReactNode }) {
-  const network = WalletAdapterNetwork.Devnet;
-  const endpoint = useMemo(() => clusterApiUrl(network), [network]);
-  const wallets = useMemo(() => [
-    new PhantomWalletAdapter(),
-    new SolflareWalletAdapter(),
-  ], []);
+// Use mainnet-beta for production, devnet for development
+const NETWORK = process.env.NEXT_PUBLIC_SOLANA_NETWORK === "mainnet"
+  ? "mainnet-beta"
+  : "devnet";
+
+const ENDPOINT =
+  process.env.NEXT_PUBLIC_SOLANA_RPC_URL ?? clusterApiUrl(NETWORK as "mainnet-beta" | "devnet");
+
+export default function SolanaProvider({ children }: { children: ReactNode }) {
+  const wallets = useMemo(
+    () => [
+      new PhantomWalletAdapter(),
+      new SolflareWalletAdapter(),
+      
+      new CoinbaseWalletAdapter(),
+      new TrustWalletAdapter(),
+    ],
+    []
+  );
 
   return (
-    <ConnectionProvider endpoint={endpoint}>
-      <WalletProvider wallets={wallets} autoConnect>
+    <ConnectionProvider endpoint={ENDPOINT}>
+      {/* autoConnect=false so we control when connection happens */}
+      <WalletProvider wallets={wallets} autoConnect={false}>
         {children}
       </WalletProvider>
     </ConnectionProvider>

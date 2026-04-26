@@ -1,31 +1,42 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { createPortal } from "react-dom";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
+import WalletModal from "./WalletModal";
+import WalletSuccessToast from "./WalletSuccessToast";
 
-function WalletIcon({ size = 14 }: { size?: number }) {
+// ─── Supabase helpers ─────────────────────────────────────────────────────────
+async function loadSavedWallet(): Promise<string | null> {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+  const { data } = await supabase
+    .from("profiles").select("wallet_address").eq("id", user.id).single();
+  return data?.wallet_address ?? null;
+}
+
+async function saveWalletToDB(addr: string) {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+  await supabase.from("profiles").update({ wallet_address: addr }).eq("id", user.id);
+}
+
+async function clearWalletFromDB() {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+  await supabase.from("profiles").update({ wallet_address: null }).eq("id", user.id);
+}
+
+// ─── Icons ────────────────────────────────────────────────────────────────────
+function WalletIcon() {
   return (
-    <svg width={size} height={size} viewBox="0 0 16 16" fill="none">
-      <rect
-        x="1"
-        y="4"
-        width="14"
-        height="10"
-        rx="2"
-        stroke="currentColor"
-        strokeWidth="1.4"
-      />
+    <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+      <rect x="1" y="4" width="14" height="10" rx="2" stroke="currentColor" strokeWidth="1.4" />
       <path d="M1 7h14" stroke="currentColor" strokeWidth="1.4" />
-      <path
-        d="M5 2l2-1 2 1"
-        stroke="currentColor"
-        strokeWidth="1.4"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
       <circle cx="12" cy="11" r="1" fill="currentColor" />
     </svg>
   );
@@ -33,323 +44,202 @@ function WalletIcon({ size = 14 }: { size?: number }) {
 
 function CloseIcon() {
   return (
-    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-      <line
-        x1="2"
-        y1="2"
-        x2="12"
-        y2="12"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-      />
-      <line
-        x1="12"
-        y1="2"
-        x2="2"
-        y2="12"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-      />
+    <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+      <line x1="2" y1="2" x2="10" y2="10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="10" y1="2" x2="2" y2="10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
     </svg>
   );
 }
 
-const WALLETS = [
-  {
-    name: "Phantom",
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 128 128" fill="none">
-        <rect width="128" height="128" rx="24" fill="#AB9FF2" />
-        <path
-          d="M110.584 64.9142C110.584 60.9142 107.284 57.6142 103.284 57.6142H99.784C96.484 57.6142 93.784 54.9142 93.784 51.6142C93.784 40.3142 84.584 31.1142 73.284 31.1142H54.684C43.384 31.1142 34.184 40.3142 34.184 51.6142C34.184 54.9142 31.484 57.6142 28.184 57.6142H24.684C20.684 57.6142 17.384 60.9142 17.384 64.9142C17.384 68.9142 20.684 72.2142 24.684 72.2142H28.184C31.484 72.2142 34.184 74.9142 34.184 78.2142C34.184 89.5142 43.384 98.7142 54.684 98.7142H73.284C84.584 98.7142 93.784 89.5142 93.784 78.2142C93.784 74.9142 96.484 72.2142 99.784 72.2142H103.284C107.284 72.2142 110.584 68.9142 110.584 64.9142Z"
-          fill="white"
-        />
-        <circle cx="54" cy="65" r="7" fill="#AB9FF2" />
-        <circle cx="74" cy="65" r="7" fill="#AB9FF2" />
-      </svg>
-    ),
-    detected: () =>
-      typeof window !== "undefined" &&
-      !!(window as any).solana?.isPhantom,
-  },
-  {
-    name: "Solflare",
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 128 128" fill="none">
-        <rect width="128" height="128" rx="24" fill="#FC7227" />
-        <path d="M64 20L108 98H20L64 20Z" fill="white" />
-        <path d="M64 50L86 88H42L64 50Z" fill="#FC7227" />
-      </svg>
-    ),
-    detected: () =>
-      typeof window !== "undefined" && !!(window as any).solflare,
-  },
-];
-
+// ─── Component ────────────────────────────────────────────────────────────────
 export default function ConnectWalletButton() {
-  const {
-    connected,
-    connecting,
-    publicKey,
-    disconnect,
-    select,
-    wallets,
-  } = useWallet();
+  const { publicKey, connected, disconnect, connecting } = useWallet();
 
-  const [showModal, setShowModal] = useState(false);
-  const [saved, setSaved] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
+  const [modalOpen, setModalOpen]     = useState(false);
+  const [savedAddress, setSavedAddress] = useState<string | null>(null);
+  const [showToast, setShowToast]     = useState(false);
+  const [mounted, setMounted]         = useState(false);
+  const userInitiated = useRef(false);
 
+  // On mount: load DB address
   useEffect(() => {
-    setIsMobile(
-      /Android|iPhone|iPad|iPod/i.test(
-        typeof navigator !== "undefined" ? navigator.userAgent : ""
-      )
-    );
+    setMounted(true);
+    loadSavedWallet().then((addr) => { if (addr) setSavedAddress(addr); });
   }, []);
 
-  // Save wallet address to profile when connected
+  // When wallet connects: save to DB, close modal, maybe show toast
   useEffect(() => {
-    if (connected && publicKey && !saved) {
-      saveWalletAddress(publicKey.toString());
-      setSaved(true);
-    }
+    if (connected && publicKey) {
+      const addr = publicKey.toBase58();
+      setSavedAddress(addr);
+      saveWalletToDB(addr);
+      setModalOpen(false); // always close modal on successful connect
 
-    if (!connected) {
-      setSaved(false);
+      if (userInitiated.current) {
+        setShowToast(true);
+        userInitiated.current = false;
+        const t = setTimeout(() => setShowToast(false), 4500);
+        return () => clearTimeout(t);
+      }
     }
   }, [connected, publicKey]);
 
-  const saveWalletAddress = async (address: string) => {
-    const supabase = createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+  const openModal = useCallback(() => {
+    userInitiated.current = true;
+    setModalOpen(true);
+  }, []);
 
-    if (!user) return;
+  const handleDisconnect = useCallback(async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    await disconnect();
+    setSavedAddress(null);
+    await clearWalletFromDB();
+  }, [disconnect]);
 
-    await supabase
-      .from("profiles")
-      .update({ wallet_address: address })
-      .eq("id", user.id);
-  };
-
-  const handleConnect = (walletName: string) => {
-    setShowModal(false);
-
-    if (isMobile) {
-      // Mobile → open wallet app directly
-      const currentUrl = encodeURIComponent(window.location.href);
-
-      const deepLinks: Record<string, string> = {
-        Phantom: `https://phantom.app/ul/browse/${currentUrl}?ref=${currentUrl}`,
-        Solflare: `https://solflare.com/ul/v1/browse/${currentUrl}?ref=${currentUrl}`,
-      };
-
-      if (deepLinks[walletName]) {
-        window.location.href = deepLinks[walletName];
-        return;
-      }
-    }
-
-    // Desktop → standard wallet adapter
-    const wallet = wallets.find(
-      (w) => w.adapter.name === walletName
-    );
-
-    if (wallet) {
-      select(wallet.adapter.name);
-    } else {
-      const urls: Record<string, string> = {
-        Phantom: "https://phantom.app",
-        Solflare: "https://solflare.com",
-      };
-
-      if (urls[walletName]) {
-        window.open(urls[walletName], "_blank");
-      }
-    }
-  };
-
-  const shortAddress = publicKey
-    ? `${publicKey.toString().slice(0, 4)}...${publicKey
-        .toString()
-        .slice(-4)}`
-    : "";
-
-  if (connected && publicKey) {
+  // ── SSR skeleton ──────────────────────────────────────────────────────────
+  if (!mounted) {
     return (
-      <div
-        className="px-3 py-2.5 rounded-xl border border-[#1e2d00] flex items-center gap-2.5"
-        style={{ background: "#0a1200" }}
-      >
-        <motion.div
-          className="w-2 h-2 rounded-full bg-[#C8F135]"
-          animate={{ scale: [1, 1.3, 1] }}
-          transition={{ duration: 2, repeat: Infinity }}
-        />
-
-        <span
-          className="text-[#C8F135] text-xs tracking-wider flex-1 truncate"
-          style={{ fontFamily: "'DM Mono', monospace" }}
-        >
-          {shortAddress}
+      <div style={{
+        padding: "10px 12px", borderRadius: 12, border: "1px solid #111",
+        display: "flex", alignItems: "center", gap: 10,
+      }}>
+        <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#1a1a1a" }} />
+        <span style={{ color: "#1e1e1e", fontSize: 12, fontFamily: "DM Sans, sans-serif" }}>
+          Connect Wallet
         </span>
-
-        <button
-          onClick={() => {
-            disconnect();
-            setSaved(false);
-          }}
-          className="text-[#333] hover:text-red-400 transition-colors flex-shrink-0"
-        >
-          <CloseIcon />
-        </button>
       </div>
     );
   }
 
+  const liveAddr    = connected && publicKey ? publicKey.toBase58() : null;
+  const displayAddr = liveAddr ?? savedAddress;
+  const shortAddr   = displayAddr
+    ? `${displayAddr.slice(0, 4)}...${displayAddr.slice(-4)}`
+    : null;
+
+  // ── Connected ─────────────────────────────────────────────────────────────
+  if (shortAddr) {
+    return (
+      <>
+        <ConnectedPill
+          shortAddr={shortAddr}
+          fullAddr={displayAddr ?? ""}
+          onDisconnect={handleDisconnect}
+        />
+        <WalletSuccessToast
+          show={showToast}
+          address={displayAddr ?? ""}
+          onClose={() => setShowToast(false)}
+        />
+      </>
+    );
+  }
+
+  // ── Connecting ────────────────────────────────────────────────────────────
+  if (connecting) {
+    return (
+      <div style={{
+        padding: "10px 12px", borderRadius: 12, border: "1px solid #1a1a1a",
+        display: "flex", alignItems: "center", gap: 10,
+      }}>
+        <motion.div
+          style={{ width: 8, height: 8, borderRadius: "50%", background: "#C8F135" }}
+          animate={{ opacity: [0.3, 1, 0.3] }}
+          transition={{ duration: 1, repeat: Infinity }}
+        />
+        <span style={{ color: "#444", fontSize: 12, fontFamily: "DM Sans, sans-serif" }}>
+          Connecting…
+        </span>
+      </div>
+    );
+  }
+
+  // ── Disconnected ──────────────────────────────────────────────────────────
   return (
     <>
-      <motion.button
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
-        onClick={() => setShowModal(true)}
-        disabled={connecting}
-        className="w-full px-3 py-2.5 rounded-xl border border-[#1a1a1a] flex items-center gap-2.5 hover:border-[#C8F135]/20 hover:bg-[#0a1200] transition-all group disabled:opacity-50"
-      >
-        <WalletIcon />
-
-        <span className="text-[#2a2a2a] group-hover:text-[#C8F135] text-xs tracking-wider transition-colors">
-          {connecting ? "Connecting..." : "Connect Wallet"}
-        </span>
-      </motion.button>
-
-      {typeof window !== "undefined" &&
-        createPortal(
-          <AnimatePresence>
-            {showModal && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
-                style={{
-                  background: "rgba(0,0,0,0.85)",
-                  backdropFilter: "blur(8px)",
-                }}
-                onClick={(e) =>
-                  e.target === e.currentTarget &&
-                  setShowModal(false)
-                }
-              >
-                <motion.div
-                  initial={{ scale: 0.92, y: 20 }}
-                  animate={{ scale: 1, y: 0 }}
-                  exit={{ scale: 0.92, y: 20 }}
-                  transition={{
-                    type: "spring",
-                    damping: 25,
-                    stiffness: 300,
-                  }}
-                  className="w-full max-w-sm border border-[#1e1e1e] rounded-2xl overflow-hidden"
-                  style={{
-                    background: "#0c0c0c",
-                    fontFamily: "'DM Sans', sans-serif",
-                  }}
-                >
-                  {/* Header */}
-                  <div className="flex items-center justify-between px-6 py-5 border-b border-[#111]">
-                    <div>
-                      <h2
-                        className="text-white font-bold text-base"
-                        style={{
-                          fontFamily: "'Syne', sans-serif",
-                        }}
-                      >
-                        Connect Wallet
-                      </h2>
-
-                      <p className="text-[#333] text-xs mt-0.5">
-                        Select your Solana wallet
-                      </p>
-                    </div>
-
-                    <button
-                      onClick={() => setShowModal(false)}
-                      className="text-[#333] hover:text-white transition-colors p-1"
-                    >
-                      <CloseIcon />
-                    </button>
-                  </div>
-
-                  {/* Wallet options */}
-                  <div className="p-4 space-y-2">
-                    {WALLETS.map((wallet) => {
-                      const isDetected = wallet.detected();
-
-                      return (
-                        <motion.button
-                          key={wallet.name}
-                          whileHover={{ x: 4 }}
-                          whileTap={{ scale: 0.98 }}
-                          onClick={() =>
-                            handleConnect(wallet.name)
-                          }
-                          className="w-full flex items-center gap-4 px-4 py-3.5 rounded-xl border border-[#141414] hover:border-[#1e1e1e] hover:bg-[#0e0e0e] transition-all group"
-                        >
-                          <div
-                            className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden"
-                            style={{ background: "#111" }}
-                          >
-                            {wallet.icon}
-                          </div>
-
-                          <div className="flex-1 text-left">
-                            <p className="text-white text-sm font-medium">
-                              {wallet.name}
-                            </p>
-
-                            <p className="text-[#333] text-[10px]">
-                              {isDetected
-                                ? "Detected"
-                                : isMobile
-                                ? "Tap to open app"
-                                : "Install to connect"}
-                            </p>
-                          </div>
-
-                          {isDetected ? (
-                            <div className="flex items-center gap-1.5 flex-shrink-0">
-                              <div className="w-1.5 h-1.5 rounded-full bg-[#C8F135]" />
-                              <span className="text-[#C8F135] text-[10px]">
-                                Ready
-                              </span>
-                            </div>
-                          ) : (
-                            <span className="text-[#222] text-[10px] flex-shrink-0 group-hover:text-[#444] transition-colors">
-                              Get →
-                            </span>
-                          )}
-                        </motion.button>
-                      );
-                    })}
-                  </div>
-
-                  {/* Footer */}
-                  <div className="px-6 py-4 border-t border-[#0e0e0e]">
-                    <p className="text-[#1e1e1e] text-[10px] text-center tracking-widest uppercase">
-                      Solana Devnet · EarnID
-                    </p>
-                  </div>
-                </motion.div>
-              </motion.div>
-            )}
-          </AnimatePresence>,
-          document.body
-        )}
+      <DisconnectedButton onClick={openModal} />
+      <WalletModal isOpen={modalOpen} onClose={() => setModalOpen(false)} />
+      <WalletSuccessToast
+        show={showToast}
+        address={displayAddr ?? ""}
+        onClose={() => setShowToast(false)}
+      />
     </>
+  );
+}
+
+// ─── Sub-components ───────────────────────────────────────────────────────────
+function ConnectedPill({
+  shortAddr, fullAddr, onDisconnect,
+}: {
+  shortAddr: string;
+  fullAddr: string;
+  onDisconnect: (e: React.MouseEvent) => void;
+}) {
+  const [hov, setHov] = useState(false);
+  return (
+    <motion.div
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+      onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
+      style={{
+        padding: "10px 12px", borderRadius: 12,
+        border: `1px solid ${hov ? "#2a3d00" : "#1e2d00"}`,
+        background: "#0a1200", display: "flex", alignItems: "center", gap: 10,
+        transition: "border-color 0.15s",
+      }}
+    >
+      <motion.div
+        style={{ width: 8, height: 8, borderRadius: "50%", background: "#C8F135", flexShrink: 0 }}
+        animate={{ scale: [1, 1.4, 1] }} transition={{ duration: 2, repeat: Infinity }}
+      />
+      <span
+        title={fullAddr}
+        style={{
+          color: "#C8F135", fontSize: 12, flex: 1, overflow: "hidden",
+          textOverflow: "ellipsis", whiteSpace: "nowrap",
+          fontFamily: "'DM Mono', monospace",
+        }}
+      >
+        {shortAddr}
+      </span>
+      <button
+        onClick={onDisconnect}
+        title="Disconnect wallet"
+        style={{
+          background: "none", border: "none", cursor: "pointer", padding: 0,
+          color: hov ? "#f87171" : "#333", transition: "color 0.15s", flexShrink: 0,
+          opacity: hov ? 1 : 0,
+        }}
+      >
+        <CloseIcon />
+      </button>
+    </motion.div>
+  );
+}
+
+function DisconnectedButton({ onClick }: { onClick: () => void }) {
+  const [hov, setHov] = useState(false);
+  return (
+    <button
+      onClick={onClick}
+      onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
+      style={{
+        width: "100%", padding: "10px 12px", borderRadius: 12, cursor: "pointer",
+        border: `1px solid ${hov ? "rgba(200,241,53,0.2)" : "#1a1a1a"}`,
+        background: hov ? "#0a1200" : "transparent",
+        display: "flex", alignItems: "center", gap: 10,
+        transition: "all 0.15s",
+      }}
+    >
+      <span style={{ color: hov ? "#C8F135" : "#2a2a2a", transition: "color 0.15s", flexShrink: 0 }}>
+        <WalletIcon />
+      </span>
+      <span style={{
+        color: hov ? "#C8F135" : "#2a2a2a", fontSize: 12, transition: "color 0.15s",
+        fontFamily: "DM Sans, sans-serif", letterSpacing: "0.04em",
+      }}>
+        Connect Wallet
+      </span>
+    </button>
   );
 }
