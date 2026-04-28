@@ -11,7 +11,6 @@ import {
   TrustWalletAdapter,
 } from "@solana/wallet-adapter-wallets";
 
-// Use mainnet-beta for production, devnet for development
 const NETWORK = process.env.NEXT_PUBLIC_SOLANA_NETWORK === "mainnet"
   ? "mainnet-beta"
   : "devnet";
@@ -33,7 +32,6 @@ export default function SolanaProvider({ children }: { children: ReactNode }) {
 
   return (
     <ConnectionProvider endpoint={ENDPOINT}>
-      {/* autoConnect=false so we control when connection happens */}
       <WalletProvider wallets={wallets} autoConnect={false}>
         {children}
       </WalletProvider>

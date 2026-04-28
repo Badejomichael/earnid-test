@@ -7,7 +7,6 @@ import { createClient } from "@/lib/supabase/client";
 import WalletModal from "./WalletModal";
 import WalletSuccessToast from "./WalletSuccessToast";
 
-// ─── Supabase helpers ─────────────────────────────────────────────────────────
 async function loadSavedWallet(): Promise<string | null> {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -31,7 +30,7 @@ async function clearWalletFromDB() {
   await supabase.from("profiles").update({ wallet_address: null }).eq("id", user.id);
 }
 
-// ─── Icons ────────────────────────────────────────────────────────────────────
+// Icon 
 function WalletIcon() {
   return (
     <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
@@ -51,7 +50,7 @@ function CloseIcon() {
   );
 }
 
-// ─── Component ────────────────────────────────────────────────────────────────
+// Component 
 export default function ConnectWalletButton() {
   const { publicKey, connected, disconnect, connecting } = useWallet();
 
@@ -67,13 +66,13 @@ export default function ConnectWalletButton() {
     loadSavedWallet().then((addr) => { if (addr) setSavedAddress(addr); });
   }, []);
 
-  // When wallet connects: save to DB, close modal, maybe show toast
+  // When wallet connects: save to DB
   useEffect(() => {
     if (connected && publicKey) {
       const addr = publicKey.toBase58();
       setSavedAddress(addr);
       saveWalletToDB(addr);
-      setModalOpen(false); // always close modal on successful connect
+      setModalOpen(false); 
 
       if (userInitiated.current) {
         setShowToast(true);
@@ -96,7 +95,7 @@ export default function ConnectWalletButton() {
     await clearWalletFromDB();
   }, [disconnect]);
 
-  // ── SSR skeleton ──────────────────────────────────────────────────────────
+  // SSR skeleton 
   if (!mounted) {
     return (
       <div style={{
@@ -117,7 +116,7 @@ export default function ConnectWalletButton() {
     ? `${displayAddr.slice(0, 4)}...${displayAddr.slice(-4)}`
     : null;
 
-  // ── Connected ─────────────────────────────────────────────────────────────
+  // Connected
   if (shortAddr) {
     return (
       <>
@@ -135,7 +134,7 @@ export default function ConnectWalletButton() {
     );
   }
 
-  // ── Connecting ────────────────────────────────────────────────────────────
+  // Connecting
   if (connecting) {
     return (
       <div style={{
@@ -154,7 +153,7 @@ export default function ConnectWalletButton() {
     );
   }
 
-  // ── Disconnected ──────────────────────────────────────────────────────────
+  // Disconnected 
   return (
     <>
       <DisconnectedButton onClick={openModal} />
@@ -168,7 +167,7 @@ export default function ConnectWalletButton() {
   );
 }
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
+// Sub-components 
 function ConnectedPill({
   shortAddr, fullAddr, onDisconnect,
 }: {

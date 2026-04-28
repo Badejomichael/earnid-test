@@ -55,7 +55,7 @@ const PROFESSIONS = [
   "Graphic Designer","Data Analyst","DevOps Engineer","Other",
 ];
 
-// ─── Sidebar ──────────────────────────────────────────────────────────────────
+// Sidebar
 function Sidebar({ profile, active, onSignOut, mobile, onClose }: {
   profile: Profile | null; active: string; onSignOut: () => void; mobile?: boolean; onClose?: () => void;
 }) {
@@ -106,10 +106,9 @@ function Sidebar({ profile, active, onSignOut, mobile, onClose }: {
   );
 }
 
-// ─── Custom Profession Select ─────────────────────────────────────────────────
+// Custom Profession Select 
 function CustomProfessionSelect({ value, onChange }: { value: string; onChange: (val: string) => void }) {
   const [open, setOpen] = useState(false);
-  // showInput: true only while the user is actively typing a custom profession
   const [showInput, setShowInput] = useState(false);
   const [customVal, setCustomVal] = useState("");
   const ref = useRef<HTMLDivElement>(null);
@@ -126,7 +125,7 @@ function CustomProfessionSelect({ value, onChange }: { value: string; onChange: 
   const handleCommit = (raw: string) => {
     const trimmed = raw.trim();
     if (trimmed) onChange(trimmed);
-    setShowInput(false); // hide input after committing
+    setShowInput(false); 
     setCustomVal("");
   };
 
@@ -152,7 +151,7 @@ function CustomProfessionSelect({ value, onChange }: { value: string; onChange: 
               <button key={p} type="button"
                 onClick={() => {
                   if (p === "Other") {
-                    setShowInput(true); // show text input only when Other is clicked
+                    setShowInput(true);
                     setCustomVal("");
                   } else {
                     onChange(p);
@@ -175,7 +174,6 @@ function CustomProfessionSelect({ value, onChange }: { value: string; onChange: 
         )}
       </AnimatePresence>
 
-      {/* Custom input — only visible while actively typing, disappears on blur */}
       <AnimatePresence>
         {showInput && (
           <motion.div initial={{ opacity: 0, height: 0, marginTop: 0 }} animate={{ opacity: 1, height: "auto", marginTop: 10 }}
@@ -206,7 +204,7 @@ function CustomProfessionSelect({ value, onChange }: { value: string; onChange: 
   );
 }
 
-// ─── Field ────────────────────────────────────────────────────────────────────
+// Field 
 function Field({ label, name, value, onChange, placeholder, type = "text", mono = false }: {
   label: string; name: string; value: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -223,7 +221,6 @@ function Field({ label, name, value, onChange, placeholder, type = "text", mono 
   );
 }
 
-// ─── Wallet address field — same styling as Field, auto-populated ────────────
 function WalletField({ value, onChange }: {
   value: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -249,7 +246,7 @@ function WalletField({ value, onChange }: {
 }
 
 
-// ─── Toast ────────────────────────────────────────────────────────────────────
+// Toast 
 function Toast({ message, type }: { message: string; type: "success" | "error" }) {
   return (
     <motion.div
@@ -271,7 +268,7 @@ function Toast({ message, type }: { message: string; type: "success" | "error" }
   );
 }
 
-// ─── Delete Modal ─────────────────────────────────────────────────────────────
+// Delete Modal 
 function DeleteModal({ onClose, onConfirm, loading }: {
   onClose: () => void; onConfirm: () => void; loading: boolean;
 }) {
@@ -315,7 +312,7 @@ function DeleteModal({ onClose, onConfirm, loading }: {
   );
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
+//  Main Page
 export default function SettingsPage() {
   const router = useRouter();
   const supabase = createClient();
@@ -340,8 +337,6 @@ export default function SettingsPage() {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  // Track whether the wallet field has been manually edited by the user
-  // so we don't override their edits when the component re-renders
   const walletManuallyEdited = useRef(false);
 
   useEffect(() => {
@@ -352,8 +347,6 @@ export default function SettingsPage() {
     loadData();
   }, []);
 
-  // Auto-populate wallet field from connected wallet adapter
-  // but only if the user hasn't manually edited the field
   useEffect(() => {
     if (connected && publicKey && !walletManuallyEdited.current) {
       setForm((f) => ({ ...f, wallet_address: publicKey.toBase58() }));
@@ -440,7 +433,6 @@ export default function SettingsPage() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    // Mark wallet field as manually edited so live wallet doesn't override it
     if (name === "wallet_address") {
       walletManuallyEdited.current = true;
     }
@@ -533,7 +525,6 @@ export default function SettingsPage() {
               <Field label="Country" name="country" value={form.country}
                 onChange={handleChange} placeholder="Nigeria" />
 
-              {/* ── Editable wallet field ── */}
               <WalletField value={form.wallet_address} onChange={handleChange} />
 
               {/* Email read-only */}

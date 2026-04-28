@@ -136,3 +136,7 @@
 .wallet-adapter-button {
   background: #0a1200 !important;
 }
+
+html, body {
+  overflow-x: hidden !important;
+}

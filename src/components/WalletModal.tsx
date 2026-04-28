@@ -7,8 +7,6 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import { WalletReadyState } from "@solana/wallet-adapter-base";
 import type { WalletName } from "@solana/wallet-adapter-base";
 
-// Whitelist of real Solana wallets — prevents EVM wallets (MetaMask etc.)
-// that inject window.solana from appearing
 const SOLANA_WALLET_NAMES = new Set([
   "Phantom",
   "Solflare",
@@ -44,13 +42,11 @@ export default function WalletModal({ isOpen, onClose }: WalletModalProps) {
     return () => window.removeEventListener("keydown", fn);
   }, [isOpen, onClose]);
 
-  // Lock body scroll while open
   useEffect(() => {
     document.body.style.overflow = isOpen ? "hidden" : "";
     return () => { document.body.style.overflow = ""; };
   }, [isOpen]);
 
-  // Once select() updates the wallet in context → call connect()
   useEffect(() => {
     if (!pendingWallet) return;
     if (wallet?.adapter.name === pendingWallet) {
@@ -61,21 +57,12 @@ export default function WalletModal({ isOpen, onClose }: WalletModalProps) {
 
   const handleSelect = (walletName: WalletName) => {
     const w = wallets.find((w) => w.adapter.name === walletName);
-    // ── Installed: set pending then select — useEffect fires connect()
-    // ── Not installed: adapter opens install page / mobile deep link
     setPendingWallet(walletName);
     select(walletName);
     if (!w || w.readyState !== WalletReadyState.Installed) {
-      // Non-installed wallets redirect away — close immediately
       onClose();
     }
-    // Installed wallets: modal stays open briefly showing spinner,
-    // ConnectWalletButton closes it via the `connected` useEffect
-  };
-
-  // ── STRICT: only "Installed" counts as Detected ──────────────────────────
-  // "Loadable" means the adapter CAN load (e.g. mobile injected) but the
-  // extension is NOT installed in this browser — never show as Detected
+  };  
   const solanaWallets = wallets.filter((w) => SOLANA_WALLET_NAMES.has(w.adapter.name));
   const detected  = solanaWallets.filter((w) => w.readyState === WalletReadyState.Installed);
   const available = solanaWallets.filter((w) => w.readyState !== WalletReadyState.Installed);
@@ -85,8 +72,6 @@ export default function WalletModal({ isOpen, onClose }: WalletModalProps) {
   return createPortal(
     <AnimatePresence>
       {isOpen && (
-        // ── Full-screen overlay — rendered directly in <body> via portal
-        // so NO parent stacking context can ever clip or offset it
         <motion.div
           key="wallet-overlay"
           initial={{ opacity: 0 }}
@@ -99,15 +84,15 @@ export default function WalletModal({ isOpen, onClose }: WalletModalProps) {
             top: 0, left: 0, right: 0, bottom: 0,
             zIndex: 99999,
             display: "flex",
-            alignItems: "center",      // ← centred vertically
-            justifyContent: "center",  // ← centred horizontally
+            alignItems: "center",      
+            justifyContent: "center",  
             background: "rgba(0,0,0,0.82)",
             backdropFilter: "blur(8px)",
             WebkitBackdropFilter: "blur(8px)",
             padding: "16px",
           }}
         >
-          {/* ── Modal panel ── */}
+          {/* Modal panel */}
           <motion.div
             key="wallet-panel"
             initial={{ opacity: 0, scale: 0.96, y: 16 }}
@@ -209,7 +194,7 @@ export default function WalletModal({ isOpen, onClose }: WalletModalProps) {
   );
 }
 
-// ─── Section wrapper ──────────────────────────────────────────────────────────
+// Section wrapper
 function Section({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div style={{ marginBottom: 14 }}>
@@ -227,7 +212,7 @@ function Section({ label, children }: { label: string; children: React.ReactNode
   );
 }
 
-// ─── Close button ─────────────────────────────────────────────────────────────
+// Close button
 function CloseButton({ onClick }: { onClick: () => void }) {
   const [hov, setHov] = useState(false);
   return (
@@ -248,7 +233,7 @@ function CloseButton({ onClick }: { onClick: () => void }) {
   );
 }
 
-// ─── Wallet row ───────────────────────────────────────────────────────────────
+// Wallet row 
 interface WalletRowProps {
   name: string;
   icon: string;
@@ -276,7 +261,7 @@ function WalletRow({ name, icon, badge, isSpinning, onSelect }: WalletRowProps) 
         border: "1px solid #1c1c1c", background: "#0a0a0a",
         display: "flex", alignItems: "center", justifyContent: "center",
       }}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
+      
         <img src={icon} alt={name} width={34} height={34}
           style={{ width: "100%", height: "100%", objectFit: "contain" }}
           onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
@@ -296,7 +281,7 @@ function WalletRow({ name, icon, badge, isSpinning, onSelect }: WalletRowProps) 
           style={{ width: 14, height: 14, borderRadius: "50%", border: "1.5px solid transparent", borderTopColor: "#C8F135", flexShrink: 0 }} />
       )}
 
-      {/* Detected badge — only when truly Installed */}
+      {/* Detected badge */}
       {badge === "detected" && !isSpinning && (
         <span style={{
           fontSize: 10, padding: "2px 8px", borderRadius: 999, flexShrink: 0,

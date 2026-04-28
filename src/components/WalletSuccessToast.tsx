@@ -18,7 +18,6 @@ export default function WalletSuccessToast({ show, address, onClose }: WalletSuc
 
   if (!mounted) return null;
 
-  // Render in a portal so it's always above everything and truly centered
   return createPortal(
     <AnimatePresence>
       {show && (
